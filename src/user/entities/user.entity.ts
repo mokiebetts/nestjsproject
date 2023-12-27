@@ -18,6 +18,9 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'varchar', unique: false, nullable: false })
+  nickname: string;
+
   @Column({ type: 'varchar', unique: true, nullable: false })
   email: string;
 
@@ -26,6 +29,9 @@ export class User {
 
   @Column({ type: 'enum', enum: Role, default: Role.User })
   role: Role;
+
+  @Column({ type: 'int', default: 100000 })
+  point: number;
 
   @OneToMany(() => Reservation, (reservation) => reservation.user)
   reservations: Reservation[];

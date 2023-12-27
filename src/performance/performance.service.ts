@@ -10,7 +10,6 @@ import { Performance } from './entiites/perfromance.entity';
 
 @Injectable()
 export class PerformanceService {
-  articles: any;
   constructor(
     @InjectRepository(Performance)
     private readonly performanceRepository: Repository<Performance>,
@@ -23,11 +22,12 @@ export class PerformanceService {
   }
 
   async findOne(id: number) {
+    console.log(id);
     return await this.verifyPerformanceById(id);
   }
 
-  async findtitle(title: string) {
-    return await this.verifyPerformanceByTitle(title);
+  async findtitle(findTitleDto) {
+    return await this.verifyPerformanceByTitle(findTitleDto);
   }
 
   async findcategory(category: string) {
@@ -50,6 +50,20 @@ export class PerformanceService {
     await this.performanceRepository.delete({ id });
   }
 
+  async updateTicketCount(performanceId: number, reduceCount: number) {
+    const performance = await this.verifyPerformanceById(performanceId);
+
+    if (performance) {
+      performance.ticketCount = reduceCount;
+
+      performance.updateStatus();
+
+      await this.performanceRepository.save(performance);
+
+      return performance;
+    }
+  }
+
   private async verifyPerformanceById(id: number) {
     const performance = await this.performanceRepository.findOne({
       where: { id: id },
@@ -61,9 +75,9 @@ export class PerformanceService {
     return performance;
   }
 
-  private async verifyPerformanceByTitle(title: string) {
+  private async verifyPerformanceByTitle(findTitleDto) {
     const performance = await this.performanceRepository.find({
-      where: { title: ILike(`%${title}%`) },
+      where: { title: ILike(`%${findTitleDto.title}%`) },
     });
 
     if (!performance) {

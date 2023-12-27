@@ -1,51 +1,53 @@
-import _ from 'lodash';
 import { Repository } from 'typeorm';
-
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-
-import { SupportMessage } from './entities/support-message.entity';
+import { Reservation } from './entities/reservation.entity';
 
 @Injectable()
-export class SupportMessageService {
+export class ReservationService {
   constructor(
-    @InjectRepository(SupportMessage)
-    private supportMessageRepository: Repository<SupportMessage>,
+    @InjectRepository(Reservation)
+    private reservationRepository: Repository<Reservation>,
   ) {}
 
-  async getMessagesByTeamId(teamId: number) {
-    return await this.supportMessageRepository.findBy({
-      team_id: teamId,
+  async getMyReservations(myId: number) {
+    return await this.reservationRepository.find({
+      where: { userId: myId },
     });
   }
 
-  async createMessage(teamId: number, userId: number, message: string) {
-    await this.supportMessageRepository.save({
-      team_id: teamId,
-      user_id: userId,
-      message,
-    });
-  }
-
-  async updateMessage(id: number, userId: number, message: string) {
-    await this.verifyMessage(id, userId);
-    await this.supportMessageRepository.update({ id }, { message });
-  }
-
-  async deleteMessage(id: number, userId: number) {
-    await this.verifyMessage(id, userId);
-    await this.supportMessageRepository.delete({ id });
-  }
-
-  private async verifyMessage(id: number, userId: number) {
-    const supportMessage = await this.supportMessageRepository.findOneBy({
-      id,
+  async ticketing(performanceId: number, myId: number) {
+    const reservation = this.reservationRepository.create({
+      performanceId,
+      userId: myId,
     });
 
-    if (_.isNil(supportMessage) || supportMessage.user_id !== userId) {
-      throw new NotFoundException(
-        '메시지를 찾을 수 없거나 수정/삭제할 권한이 없습니다.',
-      );
+    await this.reservationRepository.save(reservation);
+
+    return reservation;
+  }
+
+  async cancelticket(id: number, myId: number) {
+    await this.verifyTicket(id, myId);
+
+    const reservation = await this.reservationRepository.findOne({
+      where: { id },
+    });
+
+    if (!reservation) {
+      throw new NotFoundException('Reservation not found.');
+    }
+
+    await this.reservationRepository.remove(reservation);
+  }
+
+  private async verifyTicket(id: number, userId: number) {
+    const reservation = await this.reservationRepository.findOne({
+      where: { id },
+    });
+
+    if (!reservation || reservation.userId !== userId) {
+      throw new NotFoundException('권한이 없습니다.');
     }
   }
 }

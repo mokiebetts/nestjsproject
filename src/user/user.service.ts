@@ -1,6 +1,7 @@
+import { Role } from 'src/user/types/userRole.type';
 import { compare, hash } from 'bcrypt';
 import _ from 'lodash';
-import { Repository } from 'typeorm';
+import { Admin, Repository } from 'typeorm';
 
 import {
   ConflictException,
@@ -20,17 +21,17 @@ export class UserService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(email: string, password: string) {
-    const existingUser = await this.findByEmail(email);
+  async register(userDto) {
+    const existingUser = await this.findByEmail(userDto.email);
     if (existingUser) {
       throw new ConflictException(
         '이미 해당 이메일로 가입된 사용자가 있습니다!',
       );
     }
 
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = await hash(userDto.password, 10);
     await this.userRepository.save({
-      email,
+      ...userDto,
       password: hashedPassword,
     });
   }
@@ -56,5 +57,21 @@ export class UserService {
 
   async findByEmail(email: string) {
     return await this.userRepository.findOneBy({ email });
+  }
+  async pointSave(myId: number, updatedPoint: number) {
+    await this.userRepository.update(myId, { point: updatedPoint });
+  }
+
+  async getMyInfo(myId: number) {
+    return await this.userRepository.findOne({ where: { id: myId } });
+  }
+
+  async uptoAdmin(myId: number) {
+    const user = await this.userRepository.findOne({ where: { id: myId } });
+
+    if (user) {
+      user.role = Role.Admin;
+      await this.userRepository.save(user);
+    }
   }
 }

@@ -1,5 +1,3 @@
-import { User } from './../user/entities/user.entity';
-import { Role } from './../user/type/userRole.type';
 import { Roles } from 'src/auth/roles.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Role } from 'src/user/types/userRole.type';
@@ -14,9 +12,7 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-
-import { Performance } from './entiites/perfromance.entity';
-import { PostPerformanceDto } from './dto/perfromance-post.dto';
+import { PostPerformanceDto, FindTitleDto } from './dto/perfromance-post.dto';
 import { PerformanceService } from './performance.service';
 
 @UseGuards(RolesGuard)
@@ -29,7 +25,7 @@ export class PerformanceController {
   async findAll() {
     return await this.performanceService.findAll();
   }
-  @Get(':category')
+  @Get('category/:category')
   async findcategory(@Param('category') category: string) {
     return await this.performanceService.findcategory(category);
   }
@@ -39,9 +35,10 @@ export class PerformanceController {
     return await this.performanceService.findOne(id);
   }
 
-  @Get(':id')
-  async findtitle(@Body('title') title: string) {
-    return await this.performanceService.findtitle(title);
+  @Get('find/find-title')
+  async findtitle(@Body() findTitleDto: FindTitleDto) {
+    console.log(findTitleDto);
+    return await this.performanceService.findtitle(findTitleDto);
   }
 
   @Roles(Role.Admin)

@@ -1,5 +1,12 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Reservation } from 'src/reservation/entities/reservation.entity';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  BeforeInsert,
+  BeforeUpdate,
+} from 'typeorm';
+import { Reservation } from '../../reservation/entities/reservation.entity';
 
 @Entity({
   name: 'performance',
@@ -14,8 +21,8 @@ export class Performance {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'timestamp', array: true, default: [], nullable: false })
-  dateTime: Date[];
+  @Column({ type: 'varchar', nullable: false })
+  dateTime: string;
 
   @Column({ type: 'varchar', nullable: false })
   location: string;
@@ -35,8 +42,18 @@ export class Performance {
   @Column({ type: 'int', nullable: false, default: 0 })
   ticketCount: number;
 
-  @Column({ type: 'boolean', nullable: false, default: false })
-  soldout: boolean;
+  @Column({ type: 'varchar', nullable: false })
+  status: string;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  updateStatus() {
+    if (this.ticketCount <= 0) {
+      this.status = 'SoldOut';
+    } else {
+      this.status = 'Available for Reservation';
+    }
+  }
 
   @OneToMany(() => Reservation, (reservation) => reservation.performance)
   reservations: Reservation[];

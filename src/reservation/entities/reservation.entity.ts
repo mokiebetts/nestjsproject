@@ -1,30 +1,27 @@
 import {
-  Column,
   Entity,
-  JoinColumn,
-  ManyToOne,
+  Column,
   PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
-
 import { Performance } from '../../performance/entiites/perfromance.entity';
 import { User } from '../../user/entities/user.entity';
 
-@Entity({
-  name: 'reservation',
-})
+@Entity({ name: 'reservation' })
 export class Reservation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  message: string;
+  @Column({ name: 'reservation_date', type: 'date' })
+  reservationDate: Date;
 
-  @ManyToOne(() => User, (user) => user.reservation)
+  @ManyToOne(() => User, (user) => user.reservations)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
   @Column({ type: 'bigint', name: 'user_id' })
-  user_id: number;
+  userId: number;
 
   @ManyToOne(() => Performance, (performance) => performance.reservations, {
     onDelete: 'CASCADE',
@@ -33,5 +30,5 @@ export class Reservation {
   performance: Performance;
 
   @Column({ type: 'bigint', name: 'performance_id' })
-  performance_id: number;
+  performanceId: number;
 }

@@ -1,13 +1,22 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { SupportMessage } from './entities/support-message.entity';
-import { SupportMessageController } from './support-message.controller';
-import { SupportMessageService } from './support-message.service';
+import { Reservation } from './entities/reservation.entity';
+import { ReservationService } from './reservation.service';
+import { ReservationController } from './reservation.controller';
+import { PerformanceService } from './../performance/performance.service';
 
+import { Performance } from 'src/performance/entiites/perfromance.entity';
+import { User } from 'src/user/entities/user.entity';
+import { UserModule } from 'src/user/user.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([SupportMessage])],
-  providers: [SupportMessageService],
-  controllers: [SupportMessageController],
+  imports: [
+    TypeOrmModule.forFeature([Reservation]),
+    TypeOrmModule.forFeature([Performance]),
+    TypeOrmModule.forFeature([User]),
+    UserModule,
+  ],
+  providers: [ReservationService, PerformanceService],
+  controllers: [ReservationController],
 })
 export class ReservationModule {}
