@@ -7,6 +7,7 @@ import {
   ConflictException,
   Injectable,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -58,8 +59,13 @@ export class UserService {
   async findByEmail(email: string) {
     return await this.userRepository.findOneBy({ email });
   }
+
   async pointSave(myId: number, updatedPoint: number) {
-    await this.userRepository.update(myId, { point: updatedPoint });
+    try {
+      await this.userRepository.update(myId, { point: updatedPoint });
+    } catch (error) {
+      throw new NotFoundException('Failed to update user point');
+    }
   }
 
   async getMyInfo(myId: number) {
