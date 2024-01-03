@@ -5,42 +5,76 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike } from 'typeorm';
 
-import { PostPerformanceDto } from './dto/perfromance-post.dto';
+import {
+  FindTitleDto,
+  PostPerformanceDto,
+  UpdatePerformanceDto,
+} from './dto/perfromance-post.dto';
 import { Performance } from './entiites/perfromance.entity';
+
+import { Seat } from '../seat/seat.entities/seat.entity';
 
 @Injectable()
 export class PerformanceService {
   constructor(
     @InjectRepository(Performance)
     private readonly performanceRepository: Repository<Performance>,
+    @InjectRepository(Seat)
+    private readonly seatRepository: Repository<Seat>,
   ) {}
 
   async findAll(): Promise<Performance[]> {
     return await this.performanceRepository.find({
-      select: ['id', 'title'],
+      select: ['id', 'title', 'dateTime'],
     });
   }
 
   async findOne(id: number) {
-    console.log(id);
-    return await this.verifyPerformanceById(id);
+    const performance = await this.verifyPerformanceById(id);
+    const performanceId = performance.id;
+
+    const seats = await this.seatRepository.find({
+      where: {
+        performanceId: performanceId,
+      },
+    });
+
+    const performanceWithSeat = this.performanceRepository.create({
+      ...performance,
+      seats: seats,
+    });
+
+    return performanceWithSeat;
   }
 
-  async findtitle(findTitleDto) {
-    return await this.verifyPerformanceByTitle(findTitleDto);
+  async findTitle(title: string) {
+    const performance = await this.verifyPerformanceByTitle(title);
+
+    return performance.map(({ id, title, dateTime }) => ({
+      id,
+      title,
+      dateTime,
+    }));
   }
 
-  async findcategory(category: string) {
-    return await this.verifyPerformanceByCategory(category);
+  async findCategory(category: string) {
+    const performance = await this.verifyPerformanceByCategory(category);
+    return performance.map(({ id, title, dateTime }) => ({
+      id,
+      title,
+      dateTime,
+    }));
   }
 
-  async create(postPerformanceDto: PostPerformanceDto) {
-    const createdPerformance =
-      this.performanceRepository.create(postPerformanceDto);
+  async create(userId: number, postPerformanceDto: PostPerformanceDto) {
+    const createdPerformance = this.performanceRepository.create({
+      ...postPerformanceDto,
+      userId: userId,
+    });
     return await this.performanceRepository.save(createdPerformance);
   }
 
-  async update(id: number, updatePerformanceDto: PostPerformanceDto) {
+  async update(id: number, updatePerformanceDto: UpdatePerformanceDto) {
     await this.verifyPerformanceById(id);
     await this.performanceRepository.update({ id }, updatePerformanceDto);
   }
@@ -48,20 +82,6 @@ export class PerformanceService {
   async delete(id: number) {
     await this.verifyPerformanceById(id);
     await this.performanceRepository.delete({ id });
-  }
-
-  async updateTicketCount(performanceId: number, reduceCount: number) {
-    const performance = await this.verifyPerformanceById(performanceId);
-
-    if (performance) {
-      performance.ticketCount = reduceCount;
-
-      performance.updateStatus();
-
-      await this.performanceRepository.save(performance);
-
-      return performance;
-    }
   }
 
   private async verifyPerformanceById(id: number) {
@@ -75,9 +95,10 @@ export class PerformanceService {
     return performance;
   }
 
-  private async verifyPerformanceByTitle(findTitleDto) {
+  private async verifyPerformanceByTitle(title: string) {
+    console.log(title);
     const performance = await this.performanceRepository.find({
-      where: { title: ILike(`%${findTitleDto.title}%`) },
+      where: { title: ILike(`%${title}%`) },
     });
 
     if (!performance) {

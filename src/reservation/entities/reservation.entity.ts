@@ -4,16 +4,18 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { Performance } from '../../performance/entiites/perfromance.entity';
 import { User } from '../../user/entities/user.entity';
+import { Seat } from '../../seat/seat.entities/seat.entity';
 
 @Entity({ name: 'reservation' })
 export class Reservation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'reservation_date', type: 'date' })
+  @CreateDateColumn({ name: 'reservation_date', type: 'timestamp' })
   reservationDate: Date;
 
   @ManyToOne(() => User, (user) => user.reservations)
@@ -31,4 +33,11 @@ export class Reservation {
 
   @Column({ type: 'bigint', name: 'performance_id' })
   performanceId: number;
+
+  @ManyToOne(() => Seat, (seat) => seat.reservation)
+  @JoinColumn({ name: 'seat_id' })
+  seat: Seat;
+
+  @Column({ type: 'bigint', name: 'seat_id' })
+  seatId: number;
 }

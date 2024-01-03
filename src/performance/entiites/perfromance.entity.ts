@@ -3,10 +3,12 @@ import {
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
-  BeforeInsert,
-  BeforeUpdate,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Reservation } from '../../reservation/entities/reservation.entity';
+import { User } from 'src/user/entities/user.entity';
+import { Seat } from '../../seat/seat.entities/seat.entity';
 
 @Entity({
   name: 'performance',
@@ -21,17 +23,12 @@ export class Performance {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', nullable: false })
-  dateTime: string;
+  @Column({ type: 'timestamp', nullable: false })
+  dateTime: Date;
+  // dateTime = new Date('2023-01-01T15:30:00');
 
   @Column({ type: 'varchar', nullable: false })
   location: string;
-
-  @Column({ type: 'decimal', nullable: false })
-  price: number;
-
-  @Column({ type: 'varchar', nullable: true })
-  seats: string;
 
   @Column({ type: 'varchar', nullable: true })
   image: string;
@@ -39,22 +36,28 @@ export class Performance {
   @Column({ type: 'varchar', nullable: true })
   category: string;
 
-  @Column({ type: 'int', nullable: false, default: 0 })
-  ticketCount: number;
+  @Column({ type: 'int', nullable: false })
+  userId: number;
 
-  @Column({ type: 'varchar', nullable: false })
-  status: string;
-
-  @BeforeInsert()
-  @BeforeUpdate()
-  updateStatus() {
-    if (this.ticketCount <= 0) {
-      this.status = 'SoldOut';
-    } else {
-      this.status = 'Available for Reservation';
-    }
-  }
+  @ManyToOne(() => User, (user) => user.performances)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   @OneToMany(() => Reservation, (reservation) => reservation.performance)
   reservations: Reservation[];
+
+  @OneToMany(() => Seat, (seat) => seat.performance, {
+    nullable: true,
+    cascade: true,
+  })
+  seats: Seat[];
+
+  isCancellationAllowed(): boolean {
+    const now = new Date();
+
+    const cancellationLimit = new Date(this.dateTime);
+    cancellationLimit.setHours(this.dateTime.getHours() - 3);
+
+    return now >= cancellationLimit;
+  }
 }

@@ -1,4 +1,5 @@
 import { Reservation } from 'src/reservation/entities/reservation.entity';
+import { Performance } from '../../performance/entiites/perfromance.entity'; // Import the Performance entity
 
 import {
   Column,
@@ -35,4 +36,7 @@ export class User {
 
   @OneToMany(() => Reservation, (reservation) => reservation.user)
   reservations: Reservation[];
+
+  @OneToMany(() => Performance, (performance) => performance.user)
+  performances: Performance[];
 }

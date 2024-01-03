@@ -1,14 +1,11 @@
-import { Performance } from './../performance/entiites/perfromance.entity';
 import { User } from 'src/user/entities/user.entity';
 
 import {
-  BadRequestException,
+  Body,
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
-  //   Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -16,16 +13,11 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { UserInfo } from '../utils/userInfo.decorator';
 import { ReservationService } from './reservation.service';
-import { PerformanceService } from 'src/performance/performance.service';
-import { UserService } from 'src/user/user.service';
+import { ReservationSeat } from './dto/reservation.dto';
 @UseGuards(AuthGuard('jwt'))
 @Controller('reservation')
 export class ReservationController {
-  constructor(
-    private readonly reservationService: ReservationService,
-    private readonly performanceService: PerformanceService,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly reservationService: ReservationService) {}
 
   @Get('')
   async getMyReservation(@UserInfo() user: User) {
@@ -37,61 +29,28 @@ export class ReservationController {
   async ticketing(
     @UserInfo() user: User,
     @Param('performanceId') performanceId: number,
+    @Body() reservationSeat: ReservationSeat,
   ) {
     const myId = user.id;
-    try {
-      const performance = await this.performanceService.findOne(performanceId);
-      const currentUser = await this.userService.getMyInfo(myId);
+    const seatNum = reservationSeat.SeatNum;
+    const seatGrade = reservationSeat.grade;
+    const userPoint = user.point;
 
-      if (!performance || performance.ticketCount <= 0) {
-        throw new NotFoundException('매진되었습니다.');
-      }
-
-      if (currentUser.point < performance.price) {
-        throw new BadRequestException('포인트가 부족합니다.');
-      }
-      const updatedPoint = currentUser.point - performance.price;
-      const reduceCount = performance.ticketCount - 1;
-      await this.userService.pointSave(myId, updatedPoint);
-      await this.performanceService.updateTicketCount(
-        performanceId,
-        reduceCount,
-      );
-
-      await this.reservationService.ticketing(performanceId, myId);
-    } catch (error) {
-      throw new BadRequestException('취소 실패, 관리자에게 문의하세요');
-    }
+    await this.reservationService.ticketing(
+      myId,
+      performanceId,
+      seatGrade,
+      seatNum,
+      userPoint,
+    );
   }
-  @Delete('delete/:id')
-  async cancelticket(@UserInfo() user: User, @Param('id') id: number) {
+  @Delete('delete/:reservationid')
+  async cancelticket(
+    @UserInfo() user: User,
+    @Param('reservationid') reservationid: number,
+  ) {
     const myId = user.id;
-    const reservation = await this.reservationService.findOne(id);
-    const performanceId = reservation.performanceId;
-
-    try {
-      const performance = await this.performanceService.findOne(performanceId);
-      const currentUser = await this.userService.getMyInfo(myId);
-
-      if (!reservation) {
-        throw new BadRequestException('예약이 없습니다.');
-      }
-      const updatedPoint =
-        Number(currentUser.point) + Number(performance.price);
-
-      console.log(currentUser.point);
-      console.log(performance.price);
-      console.log(updatedPoint);
-      const reduceCount = performance.ticketCount + 1;
-      await this.userService.pointSave(myId, updatedPoint);
-      await this.performanceService.updateTicketCount(
-        performanceId,
-        reduceCount,
-      );
-
-      await this.reservationService.cancelticket(id, myId);
-    } catch (error) {
-      throw new BadRequestException('취소 실패, 관리자에게 문의하세요');
-    }
+    const userPoint = user.point;
+    await this.reservationService.cancelticket(reservationid, myId, userPoint);
   }
 }

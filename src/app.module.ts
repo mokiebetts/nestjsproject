@@ -12,6 +12,10 @@ import { Performance } from './performance/entiites/perfromance.entity';
 import { PerformanceModule } from './performance/performance.module';
 import { User } from './user/entities/user.entity';
 import { UserModule } from './user/user.module';
+import { SeatController } from './seat/seat.controller';
+import { SeatService } from './seat/seat.service';
+import { SeatModule } from './seat/seat.module';
+import { Seat } from './seat/seat.entities/seat.entity';
 
 const typeOrmModuleOptions = {
   useFactory: async (
@@ -24,7 +28,7 @@ const typeOrmModuleOptions = {
     host: configService.get('DB_HOST'),
     port: configService.get('DB_PORT'),
     database: configService.get('DB_NAME'),
-    entities: [User, Performance, Reservation],
+    entities: [User, Performance, Reservation, Seat],
     synchronize: configService.get('DB_SYNC'),
     logging: true,
   }),
@@ -50,8 +54,9 @@ const typeOrmModuleOptions = {
     UserModule,
     PerformanceModule,
     ReservationModule,
+    SeatModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [SeatController],
+  providers: [SeatService],
 })
 export class AppModule {}
